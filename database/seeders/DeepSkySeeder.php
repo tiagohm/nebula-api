@@ -6,7 +6,7 @@ use Exception;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
-class DatabaseSeeder extends Seeder
+class DeepSkySeeder extends Seeder
 {
     /**
      * Seed the application's database.
@@ -15,13 +15,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        // DeepSky.
-
         ini_set('memory_limit', '2G');
 
         DB::table('deepsky')->delete();
 
-        $contents = file_get_contents(__DIR__ . '/catalog.json');
+        $contents = file_get_contents(__DIR__ . '/../../../data/catalog.json');
         $data = json_decode($contents, true);
 
         $transformName = function ($a, $b) {

@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\DeepSky;
 use App\Http\Controllers\Controller as BaseController;
+use App\Models\Photo;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
 class DeepSkyController extends BaseController
 {
+    // GET /dso/search
     public function search(Request $request)
     {
         $q = trim($request->query('q'));
@@ -153,6 +155,33 @@ class DeepSkyController extends BaseController
         }
 
         return $query->paginate(25)->appends($parameters);
+    }
+
+    // GET /dso/:id
+    public function get(int $id)
+    {
+        $query = DeepSky::query();
+        return $query->where('id', '=', $id)->get();
+    }
+
+    // GET /dso/:id/photo
+    public function photo(int $id)
+    {
+        $photo = Photo::query()->where('dso', '=', $id)->first();
+
+        if (empty($photo)) {
+            return response(NULL, 404);
+        }
+
+        $headers = [
+            'X-Size' => $photo['size'],
+            'X-Width' => $photo['width'],
+            'X-Height' => $photo['height'],
+            'X-Url' => $photo['url'],
+        ];
+
+        $name = str_pad($id, 5, '0', STR_PAD_LEFT) . ".webp";
+        return response()->file(__DIR__ . "/../../../../../data/photos/$name", $headers);
     }
 
     const CATALOGUE_LIST = [
