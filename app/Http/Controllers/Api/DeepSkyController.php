@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\DeepSky;
 use App\Http\Controllers\Controller as BaseController;
-use App\Models\Photo;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
@@ -167,21 +166,9 @@ class DeepSkyController extends BaseController
     // GET /dso/:id/photo
     public function photo(int $id)
     {
-        $photo = Photo::query()->where('dso', '=', $id)->first();
-
-        if (empty($photo)) {
-            return response(NULL, 404);
-        }
-
-        $headers = [
-            'X-Size' => $photo['size'],
-            'X-Width' => $photo['width'],
-            'X-Height' => $photo['height'],
-            'X-Url' => $photo['url'],
-        ];
-
         $name = str_pad($id, 5, '0', STR_PAD_LEFT) . ".webp";
-        return response()->file(__DIR__ . "/../../../../../data/photos/$name", $headers);
+        $filename = __DIR__ . "/../../../../../data/photos/$name";
+        return file_exists($filename) ? response()->file($filename) : response(NULL, 404);
     }
 
     const CATALOGUE_LIST = [
