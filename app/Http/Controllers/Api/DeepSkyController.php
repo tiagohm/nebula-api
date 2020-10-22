@@ -77,6 +77,12 @@ class DeepSkyController extends BaseController
 
         if (is_numeric($type)) {
             $query->where('type', '=', (int) $type);
+        } else {
+            $index = array_search($type, DeepSkyController::TYPES);
+
+            if ($index !== false) {
+                $query->where('type', '=', (int) $index);
+            }
         }
 
         // RA (rad).
@@ -184,6 +190,46 @@ class DeepSkyController extends BaseController
         $filename = __DIR__ . "/../../../../../data/photos/$name";
         return file_exists($filename) ? response()->file($filename) : response(NULL, 404);
     }
+
+    const TYPES = [
+        'galaxy',
+        'activeGalaxy',
+        'radioGalaxy',
+        'interactingGalaxy',
+        'quasar',
+        'starCluster',
+        'openStarCluster',
+        'globularStarCluster',
+        'stellarAssociation',
+        'starCloud',
+        'nebula',
+        'planetaryNebula',
+        'darkNebula',
+        'reflectionNebula',
+        'bipolarNebula',
+        'emissionNebula',
+        'clusterAssociatedWithNebulosity',
+        'hiiRegion',
+        'supernovaRemnant',
+        'interstellarMatter',
+        'emissionObject',
+        'blLacertaeObject',
+        'blazar',
+        'molecularCloud',
+        'youngStellarObject',
+        'possibleQuasar',
+        'possiblePlanetaryNebula',
+        'protoplanetaryNebula',
+        'star',
+        'symbioticStar',
+        'emissionLineStar',
+        'supernovaCandidate',
+        'superNovaRemnantCandidate',
+        'clusterOfGalaxies',
+        'partOfGalaxy',
+        'regionOfTheSky',
+        'unknown',
+    ];
 
     const CATALOGUE_LIST = [
         'vdbha' => false,
