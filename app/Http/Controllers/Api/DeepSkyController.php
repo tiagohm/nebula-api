@@ -12,7 +12,7 @@ class DeepSkyController extends BaseController
     // GET /dso/search
     public function search(Request $request)
     {
-        $q = trim($request->query('q'));
+        $q = strtolower(trim($request->query('q')));
         $id = $request->query('id');
         $constellation = $request->query('constellation');
         $type = $request->query('type');
@@ -130,12 +130,26 @@ class DeepSkyController extends BaseController
         if (!empty($q)) {
             $query->where(function (Builder $query) use ($q) {
                 foreach (DeepSkyController::CATALOGUE_LIST as $name => $isString) {
-                    $isNum = is_numeric($q);
+                    if (substr($q, 0, strlen($name)) === $name) {
+                        $a = trim(substr($q, strlen($name)));
+
+                        $isNum = is_numeric($a);
+
+                        if ($isNum && !$isString) {
+                            $query->orWhere($name, '=', (int) $a);
+                        } else if ($isString) {
+                            $query->orWhere($name, '=', $a);
+                        }
+                    }
+
+                    $b = $q;
+
+                    $isNum = is_numeric($b);
 
                     if ($isNum && !$isString) {
-                        $query->orWhere($name, '=', (int) $q);
+                        $query->orWhere($name, '=', (int) $b);
                     } else if ($isString) {
-                        $query->orWhere($name, 'ilike', "%$q%");
+                        $query->orWhere($name, 'ilike', "%$b%");
                     }
                 }
 
