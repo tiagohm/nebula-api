@@ -6,6 +6,8 @@ use App\Models\DeepSky;
 use App\Http\Controllers\Controller as BaseController;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use phpDocumentor\Reflection\Types\Null_;
 
 class DeepSkyController extends BaseController
 {
@@ -189,6 +191,32 @@ class DeepSkyController extends BaseController
         $name = str_pad($id, 5, '0', STR_PAD_LEFT) . ".webp";
         $filename = __DIR__ . "/../../../../../data/photos/$name";
         return file_exists($filename) ? response()->file($filename) : response(NULL, 404);
+    }
+
+    // GET /dso/:id/original
+    public function original(int $id)
+    {
+        $query = DeepSky::query();
+        $dso = $query->where('id', '=', $id)->first();
+
+        if ($dso) {
+            $ra = $dso->ra * 180 / M_PI;
+            $dec = $dso->dec * 180 / M_PI;
+            $versions = ['poss2ukstu_blue', 'phase2_gsc2'];
+
+            foreach ($versions as $v) {
+                $a = "https://archive.stsci.edu/cgi-bin/dss_search?v=$v&r=$ra&d=$dec&e=J2000&h=60&w=60&f=gif&c=none&fov=NONE&v3";
+                $res = Http::head($a);
+
+                if (str_contains($res->header('Content-Type'), 'image/gif')) {
+                    return response()->redirectTo($a, 308);
+                }
+            }
+
+            return response(NULL, 404);
+        } else {
+            return response(NULL, 404);
+        }
     }
 
     const TYPES = [
