@@ -256,7 +256,17 @@ class DeepSkyController extends BaseController
         if ($dso) {
             $ra = $dso->ra * 180 / M_PI;
             $dec = $dso->dec * 180 / M_PI;
-            $versions = ['poss2ukstu_blue', 'phase2_gsc2'];
+            $report = $this->getReportData();
+
+            if (
+                $report != NULL &&
+                array_key_exists($dso['id'], $report)
+                && $report[$dso['id']]
+            ) {
+                $versions = ['poss1_blue', 'phase2_gsc1'];
+            } else {
+                $versions = ['poss2ukstu_blue', 'phase2_gsc2'];
+            }
 
             foreach ($versions as $v) {
                 $a = "https://archive.stsci.edu/cgi-bin/dss_search?v=$v&r=$ra&d=$dec&e=J2000&h=60&w=60&f=gif&c=none&fov=NONE&v3";
