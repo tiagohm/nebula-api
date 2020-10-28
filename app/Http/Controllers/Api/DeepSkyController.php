@@ -7,7 +7,6 @@ use App\Http\Controllers\Controller as BaseController;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use phpDocumentor\Reflection\Types\Null_;
 
 class DeepSkyController extends BaseController
 {
@@ -51,12 +50,13 @@ class DeepSkyController extends BaseController
             $query->where('bennett', '=', true);
         }
 
-        foreach (DeepSkyController::CATALOGUE_LIST as $name => $isString) {
+        foreach (DeepSkyController::CATALOGUE_LIST as $name => $value) {
             if ($request->has($name)) {
                 $value = $request->get($name);
 
                 if (!empty($value)) {
                     $isNum = is_numeric($value);
+                    $isString = $value[0];
 
                     if ($isNum && !$isString) {
                         $query->where($name, '=', (int) $value);
@@ -137,11 +137,12 @@ class DeepSkyController extends BaseController
 
         if (!empty($q)) {
             $query->where(function (Builder $query) use ($q) {
-                foreach (DeepSkyController::CATALOGUE_LIST as $name => $isString) {
+                foreach (DeepSkyController::CATALOGUE_LIST as $name => $value) {
                     if (substr($q, 0, strlen($name)) === $name) {
                         $a = trim(substr($q, strlen($name)));
 
                         $isNum = is_numeric($a);
+                        $isString = $value[0];
 
                         if ($isNum && !$isString) {
                             $query->orWhere($name, '=', (int) $a);
@@ -175,14 +176,53 @@ class DeepSkyController extends BaseController
             $parameters[$key] = $parameters[$key] ?: '';
         }
 
-        return $query->paginate(25)->appends($parameters);
+        $page = $query->paginate(25);
+        $data = $page->items();
+
+        foreach ($data as $item) {
+            DeepSkyController::handleItem($item);
+        }
+
+        return $page->appends($parameters);
+    }
+
+    static private function handleItem(&$item)
+    {
+        $names = [];
+
+        foreach (DeepSkyController::CATALOGUE_LIST as $name => $value) {
+            if (!empty($item[$name])) {
+                $title = $value[1] . $item[$name];
+                array_unshift($names, $title);
+            }
+        }
+
+        if (!empty($item['names'])) {
+            preg_match_all("/\\[(.*?)\\]/i", $item['names'], $matches, PREG_PATTERN_ORDER);
+            $names = array_merge($matches[1], $names);
+            $item['names'] = $matches[1];
+        }
+
+
+
+        if (!empty($names)) {
+            $item['title'] = join(' | ', $names);
+        }
+
+        return $item;
     }
 
     // GET /dso/:id
     public function get(int $id)
     {
         $query = DeepSky::query();
-        return $query->where('id', '=', $id)->get();
+        $item = $query->where('id', '=', $id)->first();
+
+        if (empty($item)) {
+            return response(NULL, 404);
+        } else {
+            return DeepSkyController::handleItem($item);
+        }
     }
 
     // GET /dso/:id/photo
@@ -260,34 +300,34 @@ class DeepSkyController extends BaseController
     ];
 
     const CATALOGUE_LIST = [
-        'vdbha' => false,
-        'snrg' => true,
-        'vdbh' => true,
-        'ngc' => false,
-        'sh2' => false,
-        'vdb' => false,
-        'rcw' => false,
-        'ldn' => false,
-        'lbn' => false,
-        'dwb' => false,
-        'mel' => false,
-        'pgc' => false,
-        'ugc' => false,
-        'arp' => false,
-        'ced' => true,
-        'png' => true,
-        'aco' => true,
-        'hcg' => true,
-        'eso' => true,
-        'cr' => false,
-        'ic' => false,
-        'vv' => false,
-        'tr' => false,
-        'st' => false,
-        'ru' => false,
-        'pk' => true,
-        'm' => false,
-        'c' => false,
-        'b' => false,
+        'vdbha' => [false, 'vdB-Ha '],
+        'snrg' => [true, 'SNR G'],
+        'vdbh' => [true, 'vdBH '],
+        'sh2' => [false, 'SH 2-'],
+        'vdb' => [false, 'vdB '],
+        'rcw' => [false, 'RCW '],
+        'ldn' => [false, 'LDN '],
+        'lbn' => [false, 'LBN '],
+        'dwb' => [false, 'DWB '],
+        'ugc' => [false, 'UGC '],
+        'arp' => [false, 'Arp '],
+        'ced' => [true, 'Ced '],
+        'png' => [true, 'PN G'],
+        'aco' => [true, 'ACO '],
+        'hcg' => [true, 'HCG '],
+        'eso' => [true, 'ESO '],
+        'pgc' => [false, 'PGC '],
+        'mel' => [false, 'Mel '],
+        'ngc' => [false, 'NGC '],
+        'vv' => [false, 'VV '],
+        'pk' => [true, 'PK '],
+        'tr' => [false, 'Tr '],
+        'st' => [false, 'St '],
+        'ru' => [false, 'Ru '],
+        'cr' => [false, 'Cr '],
+        'ic' => [false, 'IC '],
+        'b' => [false, 'B '],
+        'c' => [false, 'C '],
+        'm' => [false, 'M '],
     ];
 }
