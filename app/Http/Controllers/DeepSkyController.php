@@ -178,7 +178,8 @@ class DeepSkyController extends BaseController
             $parameters[$key] = $parameters[$key] ?: '';
         }
 
-        $page = $query->paginate(25);
+        $perPage = $request->get('per_page') ?: 25;
+        $page = $query->paginate($perPage);
         $data = $page->items();
 
         foreach ($data as $item) {
