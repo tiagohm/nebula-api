@@ -261,7 +261,6 @@ class DeepSkyController extends BaseController
             if (
                 $report != NULL &&
                 array_key_exists($dso['id'], $report)
-                && $report[$dso['id']]
             ) {
                 $versions = ['poss1_blue', 'phase2_gsc1'];
             } else {
