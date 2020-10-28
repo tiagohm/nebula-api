@@ -219,7 +219,7 @@ class DeepSkyController extends BaseController
         }
 
         if ($report != NULL && array_key_exists($item['id'], $report)) {
-            $item['reported'] = true;
+            $item['reported'] = $report[$item['id']];
         }
 
         return $item;
