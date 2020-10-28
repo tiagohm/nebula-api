@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use \App\Http\Controllers\Api\DeepSkyController;
+use \App\Http\Controllers\DeepSkyController;
 
 /*
 |--------------------------------------------------------------------------

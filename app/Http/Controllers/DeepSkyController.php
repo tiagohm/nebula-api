@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers;
 
 use App\Models\DeepSky;
 use App\Http\Controllers\Controller as BaseController;
@@ -10,7 +10,9 @@ use Illuminate\Support\Facades\Http;
 
 class DeepSkyController extends BaseController
 {
-    // GET /dso/search
+    // API
+
+    // GET /api/dso/search
     public function search(Request $request)
     {
         $q = strtolower(trim($request->query('q')));
@@ -191,7 +193,7 @@ class DeepSkyController extends BaseController
     private function getReportData()
     {
         $filename = DeepSkyController::REPORT_FILEPATH;
-        $data = file_exists($filename) ? json_decode(file_get_contents($filename)) : NULL;
+        $data = file_exists($filename) ? json_decode(file_get_contents($filename), true) : NULL;
         return $data;
     }
 
@@ -216,14 +218,14 @@ class DeepSkyController extends BaseController
             $item['title'] = join(' | ', $names);
         }
 
-        if ($report != NULL && $report[$item['id']]) {
+        if ($report != NULL && array_key_exists($item['id'], $report)) {
             $item['reported'] = true;
         }
 
         return $item;
     }
 
-    // GET /dso/:id
+    // GET /api/dso/:id
     public function get(int $id)
     {
         $query = DeepSky::query();
@@ -237,15 +239,15 @@ class DeepSkyController extends BaseController
         }
     }
 
-    // GET /dso/:id/photo
+    // GET /api/dso/:id/photo
     public function photo(int $id)
     {
         $name = str_pad($id, 5, '0', STR_PAD_LEFT) . ".webp";
-        $filename = __DIR__ . "/../../../../../data/photos/$name";
+        $filename = __DIR__ . "/../../../../data/photos/$name";
         return file_exists($filename) ? response()->file($filename) : response(NULL, 404);
     }
 
-    // GET /dso/:id/original
+    // GET /api/dso/:id/original
     public function original(int $id)
     {
         $query = DeepSky::query();
@@ -269,19 +271,36 @@ class DeepSkyController extends BaseController
         return response(NULL, 404);
     }
 
-    // POST /dso/:id/report
+    // POST /api/dso/:id/report
     function report(int $id)
     {
         $filename = DeepSkyController::REPORT_FILEPATH;
-        $json = file_exists($filename) ? json_decode(file_get_contents($filename)) : NULL;
+        $json = file_exists($filename) ? json_decode(file_get_contents($filename), true) : NULL;
 
-        if (!empty($json) && is_array($json)) {
+        if (!empty($json)) {
             $json[$id] = true;
         } else {
             $json = [$id => true];
         }
 
         file_put_contents($filename, json_encode($json));
+    }
+
+    // WEB
+
+    // GET /catalog
+    public function catalog()
+    {
+        $query = DeepSky::query();
+        $page = $query->paginate(1000);
+        $data = $page->items();
+        $report = $this->getReportData();
+
+        foreach ($data as $item) {
+            DeepSkyController::handleItem($item, $report);
+        }
+
+        return view('catalog')->with('data', $page);
     }
 
     const TYPES = [
@@ -324,7 +343,7 @@ class DeepSkyController extends BaseController
         'unknown',
     ];
 
-    const REPORT_FILEPATH = __DIR__ . "/../../../../../data/report.json";
+    const REPORT_FILEPATH = __DIR__ . "/../../../../data/report.json";
 
     const CATALOGUE_LIST = [
         'vdbha' => [false, 'vdB-Ha '],
