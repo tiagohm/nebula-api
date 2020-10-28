@@ -24,17 +24,17 @@
             max-height: 128px;
             min-height: 128px;
             border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0);
             margin: 2px;
             cursor: pointer;
         }
 
         .photo[reported='1'] {
-            filter: sepia(100%) saturate(4) brightness(2) hue-rotate(320deg);
+            border: 1px dashed #f00;
         }
 
         .photo[reported='0'] {
-            filter: brightness(4);
+            filter: brightness(1.2);
         }
     </style>
 </head>
