@@ -179,14 +179,23 @@ class DeepSkyController extends BaseController
         $page = $query->paginate(25);
         $data = $page->items();
 
+        $report = $this->getReportData();
+
         foreach ($data as $item) {
-            DeepSkyController::handleItem($item);
+            DeepSkyController::handleItem($item, $report);
         }
 
         return $page->appends($parameters);
     }
 
-    static private function handleItem(&$item)
+    private function getReportData()
+    {
+        $filename = DeepSkyController::REPORT_FILEPATH;
+        $data = file_exists($filename) ? json_decode(file_get_contents($filename)) : NULL;
+        return $data;
+    }
+
+    static private function handleItem(&$item, $report)
     {
         $names = [];
 
@@ -203,10 +212,12 @@ class DeepSkyController extends BaseController
             $item['names'] = $matches[1];
         }
 
-
-
         if (!empty($names)) {
             $item['title'] = join(' | ', $names);
+        }
+
+        if ($report != NULL && $report[$item['id']]) {
+            $item['reported'] = true;
         }
 
         return $item;
@@ -221,7 +232,8 @@ class DeepSkyController extends BaseController
         if (empty($item)) {
             return response(NULL, 404);
         } else {
-            return DeepSkyController::handleItem($item);
+            $report = $this->getReportData();
+            return DeepSkyController::handleItem($item, $report);
         }
     }
 
@@ -252,11 +264,24 @@ class DeepSkyController extends BaseController
                     return response()->redirectTo($a, 308);
                 }
             }
-
-            return response(NULL, 404);
-        } else {
-            return response(NULL, 404);
         }
+
+        return response(NULL, 404);
+    }
+
+    // POST /dso/:id/report
+    function report(int $id)
+    {
+        $filename = DeepSkyController::REPORT_FILEPATH;
+        $json = file_exists($filename) ? json_decode(file_get_contents($filename)) : NULL;
+
+        if (!empty($json) && is_array($json)) {
+            $json[$id] = true;
+        } else {
+            $json = [$id => true];
+        }
+
+        file_put_contents($filename, json_encode($json));
     }
 
     const TYPES = [
@@ -298,6 +323,8 @@ class DeepSkyController extends BaseController
         'regionOfTheSky',
         'unknown',
     ];
+
+    const REPORT_FILEPATH = __DIR__ . "/../../../../../data/report.json";
 
     const CATALOGUE_LIST = [
         'vdbha' => [false, 'vdB-Ha '],
