@@ -2,10 +2,8 @@
 
 namespace Database\Seeders;
 
-use Exception;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 
 class DeepSkySeeder extends Seeder
 {

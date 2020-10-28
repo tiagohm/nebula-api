@@ -14,7 +14,7 @@ use \App\Http\Controllers\DeepSkyController;
 |
 */
 
-Route::prefix('dso')->group(function () {
+Route::middleware('auth:api')->prefix('dso')->group(function () {
     Route::get('/search', [DeepSkyController::class, 'search']);
     Route::get('/{id}', [DeepSkyController::class, 'get'])->where('id', '[0-9]+');
     Route::get('/{id}/photo', [DeepSkyController::class, 'photo'])->where('id', '[0-9]+');

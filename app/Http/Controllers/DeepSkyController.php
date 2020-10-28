@@ -353,7 +353,9 @@ class DeepSkyController extends BaseController
             DeepSkyController::handleItem($item);
         }
 
-        return view('catalog')->with('data', $page);
+        return view('catalog')
+            ->with('data', $page)
+            ->with('api_token', env('API_TOKEN'));
     }
 
     const TYPES = [

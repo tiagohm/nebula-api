@@ -18,4 +18,8 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/catalog', [DeepSkyController::class, 'catalog']);
+Route::get('/login', function () {
+    return view('welcome');
+})->name('login');
+
+Route::middleware('auth:api')->get('/catalog', [DeepSkyController::class, 'catalog']);
