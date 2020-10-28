@@ -20,4 +20,5 @@ Route::prefix('dso')->group(function () {
     Route::get('/{id}/photo', [DeepSkyController::class, 'photo'])->where('id', '[0-9]+');
     Route::get('/{id}/original', [DeepSkyController::class, 'original'])->where('id', '[0-9]+');
     Route::post('/{id}/report', [DeepSkyController::class, 'report'])->where('id', '[0-9]+');
+    Route::delete('/{id}/report', [DeepSkyController::class, 'unreport'])->where('id', '[0-9]+');
 });

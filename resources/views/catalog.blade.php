@@ -24,8 +24,17 @@
             max-height: 128px;
             min-height: 128px;
             border-radius: 10px;
-            border: 1px solid #EEE;
+            border: 1px solid rgba(255, 255, 255, 0.1);
             margin: 2px;
+            cursor: pointer;
+        }
+
+        .photo[reported='1'] {
+            filter: sepia(100%) saturate(4) brightness(2) hue-rotate(320deg);
+        }
+
+        .photo[reported='0'] {
+            filter: brightness(4);
         }
     </style>
 </head>
@@ -34,18 +43,24 @@
     <div class="container-fluid p-0">
         <div id="gallery" class="row justify-content-center photo-box">
             <?php foreach ($data as $item) : ?>
-                <?php if ($item['reported']) continue; ?>
-                <img class='photo' reported='<?= $item["reported"] ?>' src='/api/dso/<?= $item['id'] ?>/photo' title='<?= $item['title'] ?>' loading='lazy' onclick='reportar(this, <?= $item["id"] ?>)' />
+                <img class='photo' reported='<?= $item['reported'] ? '1' : '0' ?>' src='/api/dso/<?= $item["id"] ?>/photo' title='(<?= $item["id"] ?>): <?= $item["title"] ?>' loading='lazy' onclick='reportar(this, <?= $item["id"] ?>)' />
             <?php endforeach ?>
         </div>
     </div>
 
     <script>
         async function reportar(e, id) {
-            const response = await fetch(`/api/dso/${id}/report`, {
-                method: 'POST'
-            })
-            e.parentNode.removeChild(e)
+            if (e.getAttribute('reported') === '1') {
+                const response = await fetch(`/api/dso/${id}/report`, {
+                    method: 'DELETE'
+                })
+                e.setAttribute('reported', '0')
+            } else {
+                const response = await fetch(`/api/dso/${id}/report`, {
+                    method: 'POST'
+                })
+                e.setAttribute('reported', '1')
+            }
         }
     </script>
 </body>

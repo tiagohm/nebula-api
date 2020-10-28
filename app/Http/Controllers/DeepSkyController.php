@@ -13,10 +13,10 @@ class DeepSkyController extends BaseController
     // API
 
     // GET /api/dso/search
+    // Obtém uma lista de DSOs.
     public function search(Request $request)
     {
         $q = strtolower(trim($request->query('q')));
-        $id = $request->query('id');
         $constellation = $request->query('constellation');
         $type = $request->query('type');
         $raMax = $request->query('ra_max');
@@ -29,13 +29,13 @@ class DeepSkyController extends BaseController
         $magMin = $request->query('mag_min');
         $sortType = $request->query('sort_type', 'id');
         $sortOrder = $request->query('sort_order', 'asc');
+        $reported = $request->has('reported');
 
         $query = DeepSky::query();
 
-        // Id.
-
-        if (is_numeric($id)) {
-            $query->where('id', '=',  (int) $id);
+        // Reported.
+        if ($reported) {
+            $query->where('reported', '=', true);
         }
 
         // Catalogue.
@@ -181,23 +181,14 @@ class DeepSkyController extends BaseController
         $page = $query->paginate(25);
         $data = $page->items();
 
-        $report = $this->getReportData();
-
         foreach ($data as $item) {
-            DeepSkyController::handleItem($item, $report);
+            DeepSkyController::handleItem($item);
         }
 
         return $page->appends($parameters);
     }
 
-    private function getReportData()
-    {
-        $filename = DeepSkyController::REPORT_FILEPATH;
-        $data = file_exists($filename) ? json_decode(file_get_contents($filename), true) : NULL;
-        return $data;
-    }
-
-    static private function handleItem(&$item, $report)
+    static private function handleItem(&$item)
     {
         $names = [];
 
@@ -218,60 +209,68 @@ class DeepSkyController extends BaseController
             $item['title'] = join(' | ', $names);
         }
 
-        if ($report != NULL && array_key_exists($item['id'], $report)) {
-            $item['reported'] = $report[$item['id']];
-        }
-
         return $item;
     }
 
     // GET /api/dso/:id
+    // Obtém o DSO.
     public function get(int $id)
     {
         $query = DeepSky::query();
-        $item = $query->where('id', '=', $id)->first();
+        $dso = $query->where('id', '=', $id)->first();
 
-        if (empty($item)) {
+        if (empty($dso)) {
             return response(NULL, 404);
         } else {
-            $report = $this->getReportData();
-            return DeepSkyController::handleItem($item, $report);
+            return DeepSkyController::handleItem($dso);
         }
     }
 
     // GET /api/dso/:id/photo
+    // Obtém a foto.
     public function photo(int $id)
     {
-        $name = str_pad($id, 5, '0', STR_PAD_LEFT) . ".webp";
-        $filename = __DIR__ . "/../../../../data/photos/$name";
-        return file_exists($filename) ? response()->file($filename) : response(NULL, 404);
+        $query = DeepSky::query();
+        $dso = $query->where('id', '=', $id)->first();
+
+        if ($dso) {
+            $name = str_pad($id, 5, '0', STR_PAD_LEFT) . ".webp";
+            $filename = storage_path("photos/$name");;
+
+            if (file_exists($filename)) {
+                return response()->file($filename);
+            }
+        }
+
+        return response(NULL, 404);
     }
 
     // GET /api/dso/:id/original
+    // Redireciona para a versão original da foto.
     public function original(int $id)
     {
         $query = DeepSky::query();
         $dso = $query->where('id', '=', $id)->first();
 
         if ($dso) {
-            $ra = $dso->ra * 180 / M_PI;
-            $dec = $dso->dec * 180 / M_PI;
-            $report = $this->getReportData();
-
-            if (
-                $report != NULL &&
-                array_key_exists($dso['id'], $report)
-            ) {
-                $versions = ['poss1_blue', 'phase2_gsc1'];
+            if ($dso->reported) {
+                $versions = DeepSkyController::ALT_VERSIONS;
+            } else if (empty($dso->version)) {
+                $versions = DeepSkyController::VERSIONS;
             } else {
-                $versions = ['poss2ukstu_blue', 'phase2_gsc2'];
+                $versions = [$dso->version];
             }
 
             foreach ($versions as $v) {
-                $a = "https://archive.stsci.edu/cgi-bin/dss_search?v=$v&r=$ra&d=$dec&e=J2000&h=60&w=60&f=gif&c=none&fov=NONE&v3";
+                $ra = $dso->ra * 180 / M_PI;
+                $dec = $dso->dec * 180 / M_PI;
+                $a = "https://archive.stsci.edu/cgi-bin/dss_search?v=$v&r=$ra&d=$dec&e=J2000&h=1&w=1&f=gif&c=none&fov=NONE&v3";
                 $res = Http::head($a);
 
                 if (str_contains($res->header('Content-Type'), 'image/gif')) {
+                    $dso->version = $v;
+                    $dso->save();
+                    $a = "https://archive.stsci.edu/cgi-bin/dss_search?v=$v&r=$ra&d=$dec&e=J2000&h=60&w=60&f=gif&c=none&fov=NONE&v3";
                     return response()->redirectTo($a, 308);
                 }
             }
@@ -281,18 +280,63 @@ class DeepSkyController extends BaseController
     }
 
     // POST /api/dso/:id/report
+    // Reporta a foto do DSO para que utilize uma outra versão.
     function report(int $id)
     {
-        $filename = DeepSkyController::REPORT_FILEPATH;
-        $json = file_exists($filename) ? json_decode(file_get_contents($filename), true) : NULL;
+        $query = DeepSky::query();
+        $dso = $query->where('id', '=', $id)->first();
 
-        if (!empty($json)) {
-            $json[$id] = true;
-        } else {
-            $json = [$id => true];
+        if ($dso) {
+            if ($dso->reported) {
+                return;
+            }
+
+            $ra = $dso->ra * 180 / M_PI;
+            $dec = $dso->dec * 180 / M_PI;
+
+            // TODO: Talvez usar uma outra versão alternativa sempre q reportar.
+
+            foreach (DeepSkyController::ALT_VERSIONS as $v) {
+                $a = "https://archive.stsci.edu/cgi-bin/dss_search?v=$v&r=$ra&d=$dec&e=J2000&h=1&w=1&f=gif&c=none&fov=NONE&v3";
+                $res = Http::head($a);
+
+                if (str_contains($res->header('Content-Type'), 'image/gif')) {
+                    $dso->version = $v;
+                    $dso->reported = true;
+                    $dso->save();
+                    return;
+                }
+            }
         }
 
-        file_put_contents($filename, json_encode($json));
+        return response(NULL, 404);
+    }
+
+    // DELETE /api/dso/:id/report
+    // Desreporta a foto do DSO.
+    function unreport(int $id)
+    {
+        $query = DeepSky::query();
+        $dso = $query->where('id', '=', $id)->first();
+
+        if ($dso) {
+            $ra = $dso->ra * 180 / M_PI;
+            $dec = $dso->dec * 180 / M_PI;
+
+            foreach (DeepSkyController::VERSIONS as $v) {
+                $a = "https://archive.stsci.edu/cgi-bin/dss_search?v=$v&r=$ra&d=$dec&e=J2000&h=1&w=1&f=gif&c=none&fov=NONE&v3";
+                $res = Http::head($a);
+
+                if (str_contains($res->header('Content-Type'), 'image/gif')) {
+                    $dso->version = $v;
+                    $dso->reported = false;
+                    $dso->save();
+                    return;
+                }
+            }
+        } else {
+            return response(NULL, 404);
+        }
     }
 
     // WEB
@@ -301,12 +345,12 @@ class DeepSkyController extends BaseController
     public function catalog()
     {
         $query = DeepSky::query();
+        $query->orderBy('id', 'asc');
         $page = $query->paginate(1000);
         $data = $page->items();
-        $report = $this->getReportData();
 
         foreach ($data as $item) {
-            DeepSkyController::handleItem($item, $report);
+            DeepSkyController::handleItem($item);
         }
 
         return view('catalog')->with('data', $page);
@@ -352,7 +396,8 @@ class DeepSkyController extends BaseController
         'unknown',
     ];
 
-    const REPORT_FILEPATH = __DIR__ . "/../../../../data/report.json";
+    const ALT_VERSIONS = ['poss1_blue', 'phase2_gsc1'];
+    const VERSIONS = ['poss2ukstu_blue', 'phase2_gsc2'];
 
     const CATALOGUE_LIST = [
         'vdbha' => [false, 'vdB-Ha '],

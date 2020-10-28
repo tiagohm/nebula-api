@@ -36,6 +36,7 @@ class DeepSky extends Model
         'h400' => false,
         'bennett' => false,
         'dunlop' => false,
+        'reported' => false,
     ];
 
     /**
@@ -95,6 +96,8 @@ class DeepSky extends Model
         'h400',
         'bennett',
         'dunlop',
+        'reported',
+        'version',
     ];
 
     /**
@@ -143,5 +146,13 @@ class DeepSky extends Model
         'h400' => 'boolean',
         'bennett' => 'boolean',
         'dunlop' => 'boolean',
+        'reported' => 'boolean',
     ];
+
+    /**
+     * The attributes that should be hidden for arrays.
+     *
+     * @var array
+     */
+    protected $hidden = ['reported'];
 }
