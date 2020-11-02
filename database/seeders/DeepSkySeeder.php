@@ -39,6 +39,7 @@ class DeepSkySeeder extends Seeder
             }
 
             $item['names'] = $strNames;
+            $item['constellation'] = strtoupper($item['constellation']);
 
             DB::table('deepsky')->insert($item);
         }
