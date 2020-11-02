@@ -175,7 +175,7 @@ class DeepSkyController extends BaseController
 
         // Paginate.
 
-        $perPage = $request->get('per_page') ?: 25;
+        $perPage = $request->get('perPage') ?: 25;
         $page = $query->paginate($perPage);
         $data = array_map(function ($item) {
             $a = $item->toArray();
