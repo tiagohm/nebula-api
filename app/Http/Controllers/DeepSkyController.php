@@ -156,6 +156,7 @@ class DeepSkyController extends BaseController
                     $b = $q;
 
                     $isNum = is_numeric($b);
+                    $isString = $value[0];
 
                     if ($isNum && !$isString) {
                         $query->orWhere($name, '=', (int) $b);
