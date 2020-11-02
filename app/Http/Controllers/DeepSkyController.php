@@ -306,18 +306,26 @@ class DeepSkyController extends BaseController
         $quality = intval($request->query('quality', '100'));
 
         if ($dso) {
-            if (empty($dso->version)) {
-                foreach (DeepSkyController::VERSIONS as $v) {
-                    $photo = $this->makePhoto($dso, $format, $quality, $v);
+            $index = array_search($dso->version, DeepSkyController::VERSIONS);
 
-                    if ($photo) {
+            if ($index === false) {
+                $index = 0;
+            }
+
+            $length = count(DeepSkyController::VERSIONS);
+
+            for ($i = $index; $i < $length; $i++) {
+                $v = DeepSkyController::VERSIONS[$i];
+                $photo = $this->makePhoto($dso, $format, $quality, $v);
+
+                if ($photo) {
+                    if ($i !== $index) {
                         $dso->version = $v;
                         $dso->save();
-                        return $photo;
                     }
+
+                    return $photo;
                 }
-            } else {
-                return $this->makePhoto($dso, $format, $quality);
             }
         }
 
