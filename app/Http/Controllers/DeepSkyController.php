@@ -173,13 +173,7 @@ class DeepSkyController extends BaseController
             $query->orderBy($sortType[$i], $so);
         }
 
-        // Parameters.
-
-        $parameters = $request->except('page');
-
-        foreach ($parameters as $key => $value) {
-            $parameters[$key] = $parameters[$key] ?: '';
-        }
+        // Paginate.
 
         $perPage = $request->get('per_page') ?: 25;
         $page = $query->paginate($perPage);
@@ -189,7 +183,20 @@ class DeepSkyController extends BaseController
             DeepSkyController::handleItem($item);
         }
 
-        return $page->appends($parameters);
+        $res = [
+            'current_page' => $page->currentPage(),
+            'total' => $page->total(),
+            'count' => count($data),
+            'from' => ($page->currentPage() - 1) * $page->perPage(),
+            'to' => ($page->currentPage() - 1) * $page->perPage() + count($data) - 1,
+            'per_page' => $page->perPage(),
+            'last_page' => $page->lastPage(),
+            'prev_page' => $page->previousPageUrl() !== NULL,
+            'next_page' => $page->nextPageUrl() !== NULL,
+            'data' => $data,
+        ];
+
+        return $res;
     }
 
     // TODO: around (ra/dec ou id, arcmin ou arcsec)
