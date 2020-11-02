@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\DeepSky;
 use App\Http\Controllers\Controller as BaseController;
+use App\Jobs\MakePhoto;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 
 class DeepSkyController extends BaseController
 {
@@ -232,77 +232,7 @@ class DeepSkyController extends BaseController
         }
     }
 
-    // Cria uma foto em um determinado formato e qualidade para um DSO.
-    // $format: gif, jpeg, png, webp
-    private function makePhoto(
-        $dso,
-        string $format = 'webp',
-        int $quality = 100,
-        string $v = null
-    ) {
-        $v = $v ?: $dso->version;
-        $ra = $dso->ra * 180 / M_PI;
-        $dec = $dso->dec * 180 / M_PI;
-        $arcmin = $dso->majorAxisSize == NULL ? 10 : $dso->majorAxisSize * 60;
-        $width = $height = max(10, min($arcmin, 60));
 
-        $cachePath = storage_path("photos/{$dso->id}.webp");
-        $save = false;
-
-        if (file_exists($cachePath)) {
-            $data = file_get_contents($cachePath);
-        } else {
-            $a = $this->getPhotoUrl($v, $ra, $dec, $width, $height);
-            $res = Http::get($a);
-
-            if (str_contains($res->header('Content-Type'), 'image/gif')) {
-                $data = $res->getBody();
-                $save = true;
-            } else {
-                return false;
-            }
-        }
-
-        $im = imagecreatefromstring($data);
-
-        if ($save) {
-            imagepalettetotruecolor($im);
-            imagewebp($im, $cachePath, 90);
-        }
-
-        $headers['X-Survey'] = $v;
-        $headers['X-RA'] = $ra;
-        $headers['X-DEC'] = $dec;
-        $headers['Content-Type'] = "image/$format";
-        $headers['Content-Disposition'] = "Content-Disposition: inline; filename=\"{$dso->id}.$format\"";
-        $headers['X-Width'] = imagesx($im);
-        $headers['X-Height'] = imagesy($im);
-
-        return $this->buildPhotoResponse($im, $format, $quality, $headers);
-    }
-
-    private function buildPhotoResponse(&$im, string $format, int $quality, array &$headers)
-    {
-        return response()->stream(function () use (&$im, $format, $quality) {
-            switch ($format) {
-                case 'gif':
-                    imagegif($im, NULL);
-                    break;
-                case 'jpeg':
-                    imagejpeg($im, NULL, $quality);
-                    break;
-                case 'png':
-                    imagepng($im, NULL, 9);
-                    break;
-                case 'webp':
-                    imagepalettetotruecolor($im);
-                    imagewebp($im, NULL, $quality);
-                    break;
-            }
-
-            imagedestroy($im);
-        }, 200, $headers);
-    }
 
     // GET /api/dso/:id/photo
     // Obtém a foto.
@@ -314,26 +244,12 @@ class DeepSkyController extends BaseController
         $quality = intval($request->query('quality', '100'));
 
         if ($dso) {
-            $index = array_search($dso->version, DeepSkyController::VERSIONS);
+            $job = new MakePhoto($dso, $format, $quality);
+            $this->dispatchNow($job);
+            $photo = $job->getPhoto();
 
-            if ($index === false) {
-                $index = 0;
-            }
-
-            $length = count(DeepSkyController::VERSIONS);
-
-            for ($i = $index; $i < $length; $i++) {
-                $v = DeepSkyController::VERSIONS[$i];
-                $photo = $this->makePhoto($dso, $format, $quality, $v);
-
-                if ($photo) {
-                    if ($i !== $index) {
-                        $dso->version = $v;
-                        $dso->save();
-                    }
-
-                    return $photo;
-                }
+            if ($photo) {
+                return $photo;
             }
         }
 
@@ -382,11 +298,6 @@ class DeepSkyController extends BaseController
         return view('catalog')
             ->with('data', $page)
             ->with('api_token', env('API_TOKEN'));
-    }
-
-    private function getPhotoUrl(string $v, float $ra, float $dec, int $w = 60, int $h = 60)
-    {
-        return "https://archive.stsci.edu/cgi-bin/dss_search?v=$v&r=$ra&d=$dec&e=J2000&h=$h&w=$w&f=gif&c=none&fov=NONE&v3";
     }
 
     const TYPES = [
