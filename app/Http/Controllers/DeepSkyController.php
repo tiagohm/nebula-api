@@ -177,11 +177,11 @@ class DeepSkyController extends BaseController
 
         $perPage = $request->get('per_page') ?: 25;
         $page = $query->paginate($perPage);
-        $data = $page->items();
-
-        foreach ($data as $item) {
-            DeepSkyController::handleItem($item);
-        }
+        $data = array_map(function ($item) {
+            $a = $item->toArray();
+            DeepSkyController::handleItem($a);
+            return $a;
+        }, $page->items());
 
         $res = [
             'current_page' => $page->currentPage(),
@@ -222,7 +222,11 @@ class DeepSkyController extends BaseController
             $item['names'] = $names;
         }
 
-        return $item;
+        foreach ($item as $key => $value) {
+            if (empty($item[$key])) {
+                unset($item[$key]);
+            }
+        }
     }
 
     // GET /api/dso/:id
@@ -235,7 +239,9 @@ class DeepSkyController extends BaseController
         if (empty($dso)) {
             return response(NULL, 404);
         } else {
-            return DeepSkyController::handleItem($dso);
+            $a = $dso->toArray();
+            DeepSkyController::handleItem($a);
+            return $a;
         }
     }
 
