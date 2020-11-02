@@ -40,11 +40,16 @@
 
         #gallery a .mdi {
             position: absolute;
-            bottom: 4px;
-            right: 8px;
+            bottom: 0px;
+            right: 2px;
             font-size: 28px;
             color: #007bff;
-            opacity: 0.05;
+            opacity: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 43px;
+            height: 43px;
         }
 
         #gallery a .mdi:hover {
