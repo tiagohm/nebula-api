@@ -27,8 +27,8 @@ class DeepSkyController extends BaseController
         $distMax = $request->query('dist_max');
         $magMax = $request->query('mag_max');
         $magMin = $request->query('mag_min');
-        $sortType = $request->query('sort_type', 'id');
-        $sortOrder = $request->query('sort_order', 'asc');
+        $sortType = preg_split('/,/', $request->query('sort_type', 'id'), PREG_SPLIT_NO_EMPTY);
+        $sortOrder = preg_split('/,/', $request->query('sort_order', 'asc'), PREG_SPLIT_NO_EMPTY);
 
         $query = DeepSky::query();
 
@@ -61,6 +61,8 @@ class DeepSkyController extends BaseController
                     }
                 } else {
                     $query->whereNotNull($name);
+                    array_unshift($sortType, $name);
+                    array_unshift($sortOrder, 'asc');
                 }
             }
         }
@@ -164,8 +166,14 @@ class DeepSkyController extends BaseController
         }
 
         // Order.
+        $length = count($sortType);
 
-        $query->orderBy($sortType, $sortOrder);
+        for ($i = 0; $i < $length; $i++) {
+            $so = $i >= count($sortOrder) ? 'asc' : $sortOrder[$i];
+            $query->orderBy($sortType[$i], $so);
+        }
+
+        // Parameters.
 
         $parameters = $request->except('page');
 
