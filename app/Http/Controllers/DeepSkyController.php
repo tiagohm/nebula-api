@@ -219,7 +219,7 @@ class DeepSkyController extends BaseController
         }
 
         if (!empty($names)) {
-            $item['title'] = join(' | ', $names);
+            $item['names'] = $names;
         }
 
         return $item;

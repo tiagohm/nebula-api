@@ -119,9 +119,9 @@
 <body>
     <div class="container-fluid p-0">
         <div id="gallery" class="row justify-content-center photo-box">
-            <?php foreach ($data as $item) : ?>
-                <a href='/api/dso/<?= $item["id"] ?>/photo?format=webp&quality=100&api_token=<?= $api_token ?>' data-sub-html="(<?= $item['id'] ?>): <?= $item['title'] ?>">
-                    <img id='photo-<?= $item["id"] ?>' class='photo' src='/api/dso/<?= $item["id"] ?>/photo?format=webp&quality=100&api_token=<?= $api_token ?>' title="(<?= $item['id'] ?>): <?= $item['title'] ?>" loading='lazy' />
+            <?php foreach ($data['data'] as $item) : ?>
+                <a href='/api/dso/<?= $item["id"] ?>/photo?format=webp&quality=100&api_token=<?= $api_token ?>' data-sub-html="(<?= $item['id'] ?>): <?= join(' | ', $item['names']) ?>">
+                    <img id='photo-<?= $item["id"] ?>' class='photo' src='/api/dso/<?= $item["id"] ?>/photo?format=webp&quality=100&api_token=<?= $api_token ?>' title="(<?= $item['id'] ?>): <?= join(' | ', $item['names']) ?>" loading='lazy' />
                     <i onclick='reportar(event, <?= $item["id"] ?>)' class='mdi mdi-bug'></i>
                 </a>
             <?php endforeach ?>
