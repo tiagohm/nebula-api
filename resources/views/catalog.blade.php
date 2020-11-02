@@ -12,6 +12,8 @@
         body {
             margin: 0px;
             background: #0e0e0e;
+            overflow-x: hidden;
+            padding-top: 10px;
         }
 
         .photo-box {
@@ -27,13 +29,6 @@
             border: 1px solid rgba(255, 255, 255, 0);
             margin: 2px;
             cursor: pointer;
-        }
-
-        .photo[reported='1'] {
-            border: 1px dashed #f00;
-        }
-
-        .photo[reported='0'] {
             filter: brightness(1.2);
         }
     </style>
@@ -43,23 +38,19 @@
     <div class="container-fluid p-0">
         <div id="gallery" class="row justify-content-center photo-box">
             <?php foreach ($data as $item) : ?>
-                <img class='photo' reported='<?= $item['reported'] ? '1' : '0' ?>' src='/api/dso/<?= $item["id"] ?>/photo?api_token=<?= $api_token ?>' title='(<?= $item["id"] ?>): <?= $item["title"] ?>' loading='lazy' onclick='reportar(this, <?= $item["id"] ?>)' />
+                <img class='photo' src='/api/dso/<?= $item["id"] ?>/photo?format=webp&quality=100&api_token=<?= $api_token ?>' title="(<?= $item['id'] ?>): <?= $item['title'] ?>" loading='lazy' onclick='reportar(this, <?= $item["id"] ?>)' />
             <?php endforeach ?>
         </div>
     </div>
 
     <script>
         async function reportar(e, id) {
-            if (e.getAttribute('reported') === '1') {
-                const response = await fetch(`/api/dso/${id}/report?api_token=<?= $api_token ?>`, {
-                    method: 'DELETE'
-                })
-                e.setAttribute('reported', '0')
-            } else {
-                const response = await fetch(`/api/dso/${id}/report?api_token=<?= $api_token ?>`, {
-                    method: 'POST'
-                })
-                e.setAttribute('reported', '1')
+            const response = await fetch(`/api/dso/${id}/report?api_token=<?= $api_token ?>`, {
+                method: 'POST'
+            })
+
+            if (response.status == 200) {
+                e.src = `/api/dso/${id}/photo?format=webp&quality=100&api_token=<?= $api_token ?>&ts=${Date.now()}`
             }
         }
     </script>

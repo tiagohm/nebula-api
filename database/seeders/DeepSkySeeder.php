@@ -29,11 +29,6 @@ class DeepSkySeeder extends Seeder
             return $a . "[$b]";
         };
 
-        $reportPath = storage_path('report.json');
-        $reportData = file_exists($reportPath) ?
-            json_decode(file_get_contents($reportPath)) :
-            [];
-
         foreach ($data as $item) {
             $names = array_key_exists('names', $item) ? $item['names'] : NULL;
 
@@ -44,8 +39,6 @@ class DeepSkySeeder extends Seeder
             }
 
             $item['names'] = $strNames;
-            $reported = array_search($item['id'], $reportData) !== false;
-            $item['reported'] = $reported;
 
             DB::table('deepsky')->insert($item);
         }

@@ -14,7 +14,6 @@ class UpdateDeepSkyTable extends Migration
     public function up()
     {
         Schema::table('deepsky', function (Blueprint $table) {
-            $table->boolean('reported')->default(false);
             $table->text('version')->nullable();
         });
     }
@@ -26,6 +25,6 @@ class UpdateDeepSkyTable extends Migration
      */
     public function down()
     {
-        Schema::dropColumns('deepsky', ['reported', 'version']);
+        Schema::dropColumns('deepsky', ['version']);
     }
 }
