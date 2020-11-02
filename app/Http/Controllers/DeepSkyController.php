@@ -268,6 +268,9 @@ class DeepSkyController extends BaseController
 
             if ($index === false) {
                 $index = -1;
+            } else if ($index === 0) {
+                // Pular pra 3ª versão caso a atual seja a 1ª
+                $index = 1;
             }
 
             // Remove o cache.
