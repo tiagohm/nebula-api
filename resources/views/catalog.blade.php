@@ -55,6 +55,61 @@
         #gallery a .mdi:hover {
             opacity: 1;
         }
+
+        img.shake {
+            -webkit-animation: shake 0.5s;
+            -moz-animation: shake 0.5s;
+            animation: shake 0.5s;
+            -webkit-animation-iteration-count: 4;
+            -moz-animation-iteration-count: 4;
+            animation-iteration-count: 4;
+        }
+
+        @keyframes shake {
+            0% {
+                transform: translate(1px, 1px) rotate(0deg);
+            }
+
+            10% {
+                transform: translate(-1px, -2px) rotate(-1deg);
+            }
+
+            20% {
+                transform: translate(-3px, 0px) rotate(1deg);
+            }
+
+            30% {
+                transform: translate(3px, 2px) rotate(0deg);
+            }
+
+            40% {
+                transform: translate(1px, -1px) rotate(1deg);
+            }
+
+            50% {
+                transform: translate(-1px, 2px) rotate(-1deg);
+            }
+
+            60% {
+                transform: translate(-3px, 1px) rotate(0deg);
+            }
+
+            70% {
+                transform: translate(3px, 1px) rotate(-1deg);
+            }
+
+            80% {
+                transform: translate(-1px, -1px) rotate(1deg);
+            }
+
+            90% {
+                transform: translate(1px, 2px) rotate(0deg);
+            }
+
+            100% {
+                transform: translate(1px, -2px) rotate(-1deg);
+            }
+        }
     </style>
 
     <script src="https://cdn.jsdelivr.net/npm/lightgallery.js@latest/dist/js/lightgallery.min.js"></script>
@@ -85,7 +140,19 @@
             if (response.status == 200) {
                 const e = document.getElementById(`photo-${id}`)
                 e.src = `/api/dso/${id}/photo?format=webp&quality=100&api_token=<?= $api_token ?>&ts=${Date.now()}`
-                console.log('Reported!')
+
+                const event = () => {
+                    e.classList.remove('shake')
+                    e.removeEventListener('webkitAnimationEnd', event)
+                    e.removeEventListener('mozAnimationEnd', event)
+                    e.removeEventListener('animationEnd', event)
+                }
+
+                e.addEventListener('webkitAnimationEnd', event)
+                e.addEventListener('mozAnimationEnd', event)
+                e.addEventListener('animationEnd', event)
+
+                e.classList.add('shake')
             }
         }
 
