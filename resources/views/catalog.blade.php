@@ -67,14 +67,17 @@
             <?php foreach ($data as $item) : ?>
                 <a href='/api/dso/<?= $item["id"] ?>/photo?format=webp&quality=100&api_token=<?= $api_token ?>' data-sub-html="(<?= $item['id'] ?>): <?= $item['title'] ?>">
                     <img id='photo-<?= $item["id"] ?>' class='photo' src='/api/dso/<?= $item["id"] ?>/photo?format=webp&quality=100&api_token=<?= $api_token ?>' title="(<?= $item['id'] ?>): <?= $item['title'] ?>" loading='lazy' />
-                    <i onclick='reportar(<?= $item["id"] ?>)' class='mdi mdi-bug'></i>
+                    <i onclick='reportar(event, <?= $item["id"] ?>)' class='mdi mdi-bug'></i>
                 </a>
             <?php endforeach ?>
         </div>
     </div>
 
     <script>
-        async function reportar(id) {
+        async function reportar(event, id) {
+            event.stopPropagation()
+            event.preventDefault()
+
             const response = await fetch(`/api/dso/${id}/report?api_token=<?= $api_token ?>`, {
                 method: 'POST'
             })
@@ -82,6 +85,7 @@
             if (response.status == 200) {
                 const e = document.getElementById(`photo-${id}`)
                 e.src = `/api/dso/${id}/photo?format=webp&quality=100&api_token=<?= $api_token ?>&ts=${Date.now()}`
+                console.log('Reported!')
             }
         }
 

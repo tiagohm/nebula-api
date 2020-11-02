@@ -350,19 +350,23 @@ class DeepSkyController extends BaseController
         if ($dso) {
             $index = array_search($dso->version, DeepSkyController::VERSIONS);
 
-            if ($index !== false) {
-                // Remove o cache.
-                $cachePath = storage_path("photos/{$dso->id}.webp");
-
-                if (file_exists($cachePath)) {
-                    unlink($cachePath);
-                }
-
-                // Troca de versão.
-                $index = ($index + 1) % count(DeepSkyController::VERSIONS);
-                $dso->version = DeepSkyController::VERSIONS[$index];
-                $dso->save();
+            if ($index === false) {
+                $index = -1;
             }
+
+            // Remove o cache.
+            $cachePath = storage_path("photos/{$dso->id}.webp");
+
+            if (file_exists($cachePath)) {
+                unlink($cachePath);
+            }
+
+            // Troca de versão.
+            $index = ($index + 1) % count(DeepSkyController::VERSIONS);
+            $dso->version = DeepSkyController::VERSIONS[$index];
+            $dso->save();
+
+            return response($dso->version);
         } else {
             return response(NULL, 404);
         }
