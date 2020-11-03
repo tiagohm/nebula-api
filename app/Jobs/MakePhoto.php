@@ -48,12 +48,14 @@ class MakePhoto implements ShouldQueue
         $index = array_search($this->dso->version, DeepSkyController::VERSIONS);
 
         if ($index === false) {
-            $index = 0;
+            $start = 0;
+        } else {
+            $start = $index;
         }
 
         $length = count(DeepSkyController::VERSIONS);
 
-        for ($i = $index; $i < $length; $i++) {
+        for ($i = $start; $i < $length; $i++) {
             $v = DeepSkyController::VERSIONS[$i];
             $photo = MakePhoto::makePhoto($this->dso, $this->format, $this->quality, $v);
 

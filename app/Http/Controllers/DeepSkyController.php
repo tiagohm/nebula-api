@@ -245,8 +245,6 @@ class DeepSkyController extends BaseController
         }
     }
 
-
-
     // GET /api/dso/:id/photo
     // Obtém a foto.
     public function photo(int $id, Request $request)
