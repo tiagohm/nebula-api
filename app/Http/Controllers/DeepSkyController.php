@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller as BaseController;
 use App\Jobs\MakePhoto;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 
 class DeepSkyController extends BaseController
 {
@@ -208,18 +209,19 @@ class DeepSkyController extends BaseController
         foreach (DeepSkyController::CATALOGUE_LIST as $name => $value) {
             if (!empty($item[$name])) {
                 $title = $value[1] . $item[$name];
-                array_unshift($names, $title);
+                $names[$value[2]][] = $title;
             }
         }
 
         if (!empty($item['names'])) {
             preg_match_all("/\\[(.*?)\\]/i", $item['names'], $matches, PREG_PATTERN_ORDER);
-            $names = array_merge($matches[1], $names);
-            $item['names'] = $matches[1];
+            $names[-1][] = $matches[1];
         }
 
+        ksort($names);
+
         if (!empty($names)) {
-            $item['names'] = $names;
+            $item['names'] = Arr::flatten(array_values($names));
         }
 
         foreach ($item as $key => $value) {
@@ -356,35 +358,36 @@ class DeepSkyController extends BaseController
 
     const VERSIONS = ['poss2ukstu_blue', 'phase2_gsc2', 'poss1_blue', 'phase2_gsc1'];
 
+    // [string, name prefix, priority]
     const CATALOGUE_LIST = [
-        'vdbha' => [false, 'vdB-Ha '],
-        'snrg' => [true, 'SNR G'],
-        'vdbh' => [true, 'vdBH '],
-        'sh2' => [false, 'SH 2-'],
-        'vdb' => [false, 'vdB '],
-        'rcw' => [false, 'RCW '],
-        'ldn' => [false, 'LDN '],
-        'lbn' => [false, 'LBN '],
-        'dwb' => [false, 'DWB '],
-        'ugc' => [false, 'UGC '],
-        'arp' => [false, 'Arp '],
-        'ced' => [true, 'Ced '],
-        'png' => [true, 'PN G'],
-        'aco' => [true, 'ACO '],
-        'hcg' => [true, 'HCG '],
-        'eso' => [true, 'ESO '],
-        'pgc' => [false, 'PGC '],
-        'mel' => [false, 'Mel '],
-        'ngc' => [false, 'NGC '],
-        'vv' => [false, 'VV '],
-        'pk' => [true, 'PK '],
-        'tr' => [false, 'Tr '],
-        'st' => [false, 'St '],
-        'ru' => [false, 'Ru '],
-        'cr' => [false, 'Cr '],
-        'ic' => [false, 'IC '],
-        'b' => [false, 'B '],
-        'c' => [false, 'C '],
-        'm' => [false, 'M '],
+        'vdbha' => [false, 'vdB-Ha ', 4],
+        'snrg' => [true, 'SNR G', 4],
+        'vdbh' => [true, 'vdBH ', 4],
+        'sh2' => [false, 'SH 2-', 4],
+        'vdb' => [false, 'vdB ', 4],
+        'rcw' => [false, 'RCW ', 4],
+        'ldn' => [false, 'LDN ', 4],
+        'lbn' => [false, 'LBN ', 4],
+        'dwb' => [false, 'DWB ', 4],
+        'ugc' => [false, 'UGC ', 3],
+        'arp' => [false, 'Arp ', 4],
+        'ced' => [true, 'Ced ', 4],
+        'png' => [true, 'PN G', 3],
+        'aco' => [true, 'ACO ', 4],
+        'hcg' => [true, 'HCG ', 4],
+        'eso' => [true, 'ESO ', 3],
+        'pgc' => [false, 'PGC ', 3],
+        'mel' => [false, 'Mel ', 0],
+        'ngc' => [false, 'NGC ', 2],
+        'vv' => [false, 'VV ', 4],
+        'pk' => [true, 'PK ', 4],
+        'tr' => [false, 'Tr ', 1],
+        'st' => [false, 'St ', 1],
+        'ru' => [false, 'Ru ', 1],
+        'cr' => [false, 'Cr ', 1],
+        'ic' => [false, 'IC ', 2],
+        'b' => [false, 'B ', 0],
+        'c' => [false, 'C ', 0],
+        'm' => [false, 'M ', 0],
     ];
 }
