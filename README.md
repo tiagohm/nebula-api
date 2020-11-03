@@ -98,5 +98,3 @@ Custom response headers:
 * `X-Survey`: Photo's survey provider
 * `X-RA`: DSO's RA coordinate (0-360 degrees)
 * `X-DEC` DSO's declination coordinate (0-360 degrees)
-* `X-Width`: Photo's width in pixels
-* `X-Height`: Photo's height in pixels

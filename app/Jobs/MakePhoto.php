@@ -104,11 +104,21 @@ class MakePhoto implements ShouldQueue
             }
         }
 
-        $im = imagecreatefromstring($data);
-
-        if ($save) {
+        if ($save || $format !== 'webp') {
+            $im = imagecreatefromstring($data);
             imagepalettetotruecolor($im);
-            imagewebp($im, $cachePath, 90);
+
+            if ($save) {
+                imagewebp($im, $cachePath, 90);
+            }
+
+            if ($format === 'webp') {
+                imagedestroy($im);
+            }
+        }
+
+        if ($format === 'webp') {
+            $im = $data;
         }
 
         $headers['X-Survey'] = $v;
@@ -116,8 +126,6 @@ class MakePhoto implements ShouldQueue
         $headers['X-DEC'] = $dec;
         $headers['Content-Type'] = "image/$format";
         $headers['Content-Disposition'] = "Content-Disposition: inline; filename=\"{$dso->id}.$format\"";
-        $headers['X-Width'] = imagesx($im);
-        $headers['X-Height'] = imagesy($im);
 
         return MakePhoto::buildPhotoResponse($im, $format, $quality, $headers);
     }
@@ -136,9 +144,8 @@ class MakePhoto implements ShouldQueue
                     imagepng($im, NULL, 9);
                     break;
                 case 'webp':
-                    imagepalettetotruecolor($im);
-                    imagewebp($im, NULL, $quality);
-                    break;
+                    echo $im;
+                    return;
             }
 
             imagedestroy($im);
